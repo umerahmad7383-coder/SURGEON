@@ -1,0 +1,16 @@
+# Render Blueprint: one web service that serves the game page AND the Socket.IO backend.
+# In Render: New + -> Blueprint -> pick the repo that contains this file.
+services:
+  - type: web
+    name: code-red-turbo-surgery
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: CLIENT_ORIGIN
+        value: "*"

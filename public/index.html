@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CODE RED: TURBO SURGERY</title>
+<meta name="description" content="CODE RED: TURBO SURGERY. An online 3-player co-op arcade game: one drives the ambulance, one extracts alien parasites, one keeps the patient alive.">
+<meta name="theme-color" content="#ff2a3d">
+<meta property="og:title" content="CODE RED: TURBO SURGERY">
+<meta property="og:description" content="Three players. One ambulance. Six alien parasites. Don't let the patient flatline.">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+:root{--drv:#ff9a1f;--srg:#18e6ff;--ane:#ff3df2;--red:#ff2a3d}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#04050a;color:#e8f4ff;font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;user-select:none;-webkit-user-select:none}
+#gl{position:fixed;left:0;top:0;width:100%;height:100%;display:block;outline:none}
+#hud{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none}
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;background:radial-gradient(ellipse at center,rgba(12,6,22,.5),rgba(2,2,6,.86))}
+.hidden{display:none!important}
+.panel{width:min(1120px,95vw);max-height:95vh;overflow:auto;padding:24px 30px;border-radius:18px;background:linear-gradient(160deg,rgba(20,10,30,.93),rgba(6,8,18,.95));border:2px solid rgba(255,42,61,.55);box-shadow:0 0 40px rgba(255,42,61,.35),inset 0 0 30px rgba(24,230,255,.07)}
+h1.title{margin:0;text-align:center;line-height:1;letter-spacing:.06em}
+.title .code{display:block;font-size:clamp(40px,7vw,84px);font-weight:900;color:#ff2a3d;text-shadow:0 0 18px #ff2a3d,0 0 46px rgba(255,42,61,.7),3px 0 0 rgba(24,230,255,.55),-3px 0 0 rgba(255,61,242,.5);animation:flick 2.6s infinite}
+.title .sub{display:block;margin-top:6px;font-size:clamp(17px,2.7vw,32px);font-weight:800;color:#fff;letter-spacing:.38em;text-shadow:0 0 12px rgba(24,230,255,.9)}
+@keyframes flick{0%,91%,100%{opacity:1}92%{opacity:.5}93%{opacity:1}95%{opacity:.7}96%{opacity:1}}
+.tag{text-align:center;color:#9fb3c8;margin:10px 0 16px;font-size:15px}
+.modes{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+button{font:inherit;cursor:pointer}
+.mode{padding:12px 18px;border-radius:10px;border:2px solid #3a4660;background:#0d1322;color:#cfe3ff;font-weight:800;letter-spacing:.05em;font-size:14px;transition:all .15s}
+.mode:hover{border-color:#8fb0ff}
+.mode.sel{border-color:#ff2a3d;background:#2a0b14;color:#fff;box-shadow:0 0 16px rgba(255,42,61,.55)}
+.roles{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:12px;flex-wrap:wrap;font-weight:700;color:#9fb3c8;font-size:13px}
+.roles button{padding:8px 12px;border-radius:8px;border:2px solid #333c55;background:#0b1020;color:#cfe3ff;font-weight:800;font-size:12px;letter-spacing:.06em}
+.roles button.sel[data-role="0"]{border-color:var(--drv);box-shadow:0 0 12px var(--drv);color:#fff}
+.roles button.sel[data-role="1"]{border-color:var(--srg);box-shadow:0 0 12px var(--srg);color:#fff}
+.roles button.sel[data-role="2"]{border-color:var(--ane);box-shadow:0 0 12px var(--ane);color:#fff}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+.col{padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}
+.col h3{margin:0 0 6px;font-size:14px;letter-spacing:.1em}
+.col.drv{border-top:3px solid var(--drv)}.col.drv h3{color:var(--drv)}
+.col.srg{border-top:3px solid var(--srg)}.col.srg h3{color:var(--srg)}
+.col.ane{border-top:3px solid var(--ane)}.col.ane h3{color:var(--ane)}
+.col ul{margin:4px 0 0;padding-left:16px}
+.col li{font-size:12.5px;color:#b9c8da;line-height:1.5;margin-bottom:2px}
+kbd{display:inline-block;min-width:18px;padding:0 5px;border-radius:4px;border:1px solid #5a6680;border-bottom-width:2px;background:#151c2e;color:#fff;font-family:Consolas,monospace;font-size:11px;text-align:center;line-height:16px}
+.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+.leg{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:10px;background:rgba(255,255,255,.025);font-size:12px;color:#b9c8da;line-height:1.4}
+.leg b{color:#fff}
+.dot{flex:none;width:18px;height:18px;border-radius:50%;margin-top:2px}
+.goal{text-align:center;margin:14px 0 2px;font-size:13px;color:#d7e4f5}
+.start{display:block;margin:14px auto 0;padding:14px 40px;font-size:20px;font-weight:900;letter-spacing:.12em;border-radius:12px;border:2px solid #ff2a3d;background:linear-gradient(180deg,#ff2a3d,#a10f22);color:#fff;box-shadow:0 0 24px rgba(255,42,61,.6);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 42px rgba(255,42,61,.95)}}
+.foot{text-align:center;color:#6f8098;font-size:12px;margin-top:10px}
+.endpanel{width:min(760px,94vw);text-align:center}
+.endpanel h2{margin:4px 0 2px;font-size:clamp(34px,6vw,64px);font-weight:900;letter-spacing:.06em}
+.endpanel .reason{color:#b9c8da;font-size:16px;margin:0 0 6px}
+.grade{font-size:15px;color:#fff;margin-bottom:4px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 6px}
+.stat{padding:10px 6px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.stat .v{font-size:22px;font-weight:900;font-family:Consolas,monospace}
+.stat .k{font-size:11px;color:#8ea2ba;letter-spacing:.08em;margin-top:2px}
+.btnrow{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:8px}
+.btnrow .start{margin:0}
+@media (max-width:860px){.cols,.legend{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+
+.modes .mode{min-width:220px}
+.online{margin:14px auto 0;max-width:760px;padding:14px 16px;border-radius:12px;background:rgba(24,230,255,.05);border:1px solid rgba(24,230,255,.25)}
+.online .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.online label{font-size:12px;color:#9fb3c8;font-weight:700;letter-spacing:.08em}
+input.txt{font:inherit;font-weight:700;padding:10px 12px;border-radius:9px;border:2px solid #3a4660;background:#0b1020;color:#fff;outline:none;width:170px}
+input.txt:focus{border-color:#18e6ff}
+input.code{width:120px;text-transform:uppercase;letter-spacing:.3em;text-align:center}
+.btn{padding:11px 18px;border-radius:10px;border:2px solid #18e6ff;background:#06222a;color:#dffaff;font-weight:900;letter-spacing:.08em;font-size:14px}
+.btn:hover{background:#0b3540}
+.btn.red{border-color:#ff2a3d;background:linear-gradient(180deg,#ff2a3d,#a10f22);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.msg{min-height:18px;margin-top:8px;text-align:center;font-size:13px;color:#ffb020}
+.or{color:#5f7088;font-size:12px;font-weight:800}
+.lobbypanel{width:min(900px,95vw);text-align:center}
+.lobbypanel h2{margin:0;font-size:clamp(26px,4vw,40px);letter-spacing:.08em;color:#fff}
+.codebox{display:inline-flex;gap:12px;align-items:center;margin:10px 0 4px;padding:8px 16px;border-radius:12px;border:2px dashed #18e6ff;background:#041a20}
+.codebox .c{font-family:Consolas,monospace;font-size:clamp(30px,6vw,48px);font-weight:900;letter-spacing:.3em;color:#18e6ff;text-shadow:0 0 14px #18e6ff}
+.share{font-size:12.5px;color:#9fb3c8;word-break:break-all}
+.seats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 10px}
+.seat{padding:14px 10px;border-radius:12px;background:rgba(255,255,255,.03);border:2px solid rgba(255,255,255,.12);cursor:pointer;transition:all .15s;text-align:center}
+.seat:hover{background:rgba(255,255,255,.07)}
+.seat h3{margin:0;font-size:15px;letter-spacing:.1em}
+.seat .who{margin-top:8px;font-size:17px;font-weight:900;color:#fff;min-height:22px}
+.seat .who.ai{color:#6f8098;font-weight:700;font-size:13px}
+.seat .keys{margin-top:6px;font-size:11.5px;color:#8ea2ba}
+.seat.mine{box-shadow:0 0 22px currentColor}
+.seat.drv{color:var(--drv)}.seat.srg{color:var(--srg)}.seat.ane{color:var(--ane)}
+.seat.drv,.seat.srg,.seat.ane{border-color:currentColor}
+.seat h3,.seat .keys{color:inherit}
+.spect{font-size:12.5px;color:#9fb3c8;margin-top:4px}
+.youtag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:5px;background:#fff;color:#000;font-size:10px;font-weight:900;vertical-align:middle}
+.hosttag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:5px;background:#ffd34d;color:#000;font-size:10px;font-weight:900;vertical-align:middle}
+@media (max-width:860px){.seats{grid-template-columns:1fr}}
+</style>
+<script src="vendor/three.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<canvas id="gl" tabindex="0"></canvas>
+<canvas id="hud"></canvas>
+
+<div id="menu" class="overlay">
+ <div class="panel">
+  <h1 class="title"><span class="code">CODE RED</span><span class="sub">TURBO SURGERY</span></h1>
+  <p class="tag">An alien parasite. A speeding ambulance. Three players, each on their own screen. One very unlucky patient.</p>
+  <div class="modes">
+   <button id="btnOnline" class="mode sel">[ ONLINE · 3 PLAYERS · 3 DEVICES ]</button>
+   <button id="btnCoop" class="mode">[ LOCAL CO-OP · ONE KEYBOARD ]</button>
+   <button id="btnSolo" class="mode">[ SOLO TEST (AI CO-PILOTS) ]</button>
+  </div>
+  <div id="onlineBox" class="online">
+   <div class="row"><label for="nameIn">YOUR NAME</label><input id="nameIn" class="txt" maxlength="14" placeholder="Medic" autocomplete="off"></div>
+   <div class="row" style="margin-top:10px">
+    <button id="btnCreate" class="btn red">CREATE ROOM</button>
+    <span class="or">OR</span>
+    <input id="codeIn" class="txt code" maxlength="4" placeholder="CODE" autocomplete="off">
+    <button id="btnJoin" class="btn">JOIN ROOM</button>
+   </div>
+   <div id="onlineMsg" class="msg"></div>
+  </div>
+  <div id="rolePick" class="roles hidden">
+   <span>PLAY AS:</span>
+   <button data-role="0">P1 DRIVER</button>
+   <button data-role="1" class="sel">P2 SURGEON</button>
+   <button data-role="2">P3 ANESTHESIOLOGIST</button>
+  </div>
+  <div class="cols">
+   <div class="col drv"><h3>P1 · DRIVER (LEFT)</h3><ul>
+    <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys: gas, steer, brake</li>
+    <li><kbd>Shift</kbd> boost. Beats the clock, but cuts your reaction time</li>
+    <li>Warning beacons light up hazards ~2s out. <b>Shout callouts</b> like "BUMP!" or "HARD LEFT!"</li>
+    <li>Potholes and oil jolt the surgeon and fling tools. Crashes hurt everyone.</li></ul></div>
+   <div class="col srg"><h3>P2 · SURGEON (CENTER)</h3><ul>
+    <li><kbd>Mouse</kbd> moves the forceps</li>
+    <li>Hold <kbd>LMB</kbd> on a parasite to clamp, then drag away to pull. Keep tension in the <b>green band</b></li>
+    <li>Hold <kbd>RMB</kbd> to <b>brace</b> against bumps (steadier, slower)</li>
+    <li>Avoid yellow nerves and the ribcage. Over-pulling tears tissue.</li></ul></div>
+   <div class="col ane"><h3>P3 · ANESTHESIOLOGIST (RIGHT)</h3><ul>
+    <li><kbd>Q</kbd> sedative (BPM down), <kbd>E</kbd> adrenaline (BPM up). Hold the needle in the shifting green zone</li>
+    <li><kbd>R</kbd> / <kbd>Tab</kbd> swings the surgical lamp on or off the chest</li>
+    <li><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> or <kbd>F</kbd><kbd>G</kbd><kbd>H</kbd> swat flying tools in the left/center/right lane. Strike when the lane turns <b>green</b></li></ul></div>
+  </div>
+  <div class="legend">
+   <div class="leg"><span class="dot" style="background:radial-gradient(#00f0ff,#7a4dff);box-shadow:0 0 10px #7a4dff"></span><div><b>PHOTOPHOBIC</b><br>Burrows under the lamp. Lamp OFF to pull it, then switch the lamp straight back ON.</div></div>
+   <div class="leg"><span class="dot" style="background:radial-gradient(#eaffd0,#39ff14);box-shadow:0 0 10px #39ff14"></span><div><b>PULSE-LINKED</b><br>Throbs with the heart. Only comes out while BPM is in the green zone. Don't hit ribs.</div></div>
+   <div class="leg"><span class="dot" style="background:radial-gradient(#ffb020,#ff2a00);box-shadow:0 0 10px #ff8a00"></span><div><b>ARMORED TICK</b><br>Long, heavy pull. Brace (RMB) on every bump or the forceps slip and slice.</div></div>
+  </div>
+  <div class="goal"><b>WIN:</b> reach the hospital with all 6 parasites extracted. &nbsp; <b>LOSE:</b> patient flatlines or the 3:30 clock runs out.</div>
+  <button id="btnStart" class="start hidden">START THE SHIFT ▶</button>
+  <div class="foot">Online: create a room, send the link to two friends, each picks a seat · <kbd>M</kbd> mute · <kbd>Esc</kbd> menu</div>
+ </div>
+</div>
+
+<div id="lobby" class="overlay hidden">
+ <div class="panel lobbypanel">
+  <h2>OPERATING ROOM</h2>
+  <div class="codebox"><span class="c" id="lbCode">----</span><button id="btnCopy" class="btn">COPY INVITE LINK</button></div>
+  <div class="share" id="lbLink"></div>
+  <div class="seats">
+   <div class="seat drv" data-role="driver"><h3>P1 · DRIVER</h3><div class="who" id="seat-driver"></div><div class="keys">WASD / arrows · Shift boost</div></div>
+   <div class="seat srg" data-role="surgeon"><h3>P2 · SURGEON</h3><div class="who" id="seat-surgeon"></div><div class="keys">Mouse · LMB clamp · RMB brace</div></div>
+   <div class="seat ane" data-role="anesth"><h3>P3 · ANESTHESIOLOGIST</h3><div class="who" id="seat-anesth"></div><div class="keys">Q / E · R lamp · 1 2 3 swat</div></div>
+  </div>
+  <div class="spect" id="lbSpect"></div>
+  <div class="msg" id="lbMsg"></div>
+  <div class="btnrow"><button id="btnRun" class="start">START THE RUN ▶</button><button id="btnStand" class="mode">STAND UP</button><button id="btnLeave" class="mode">LEAVE ROOM</button></div>
+  <div class="foot">Click a seat to take it. Empty seats are flown by an AI co-pilot. Each player uses their own device.</div>
+ </div>
+</div>
+
+<div id="end" class="overlay hidden">
+ <div class="panel endpanel">
+  <h2 id="endTitle">PATIENT SAVED</h2>
+  <p class="reason" id="endReason"></p>
+  <div class="grade" id="endGrade"></div>
+  <div class="stats" id="endStats"></div>
+  <div class="btnrow"><button id="btnReplay" class="start">INSTANT REPLAY ▶</button><button id="btnToLobby" class="mode hidden">BACK TO LOBBY</button><button id="btnMenu" class="mode">MAIN MENU</button></div>
+  <div class="foot" id="endFoot"><kbd>Enter</kbd> / <kbd>Space</kbd> replay · <kbd>Esc</kbd> menu</div>
+ </div>
+</div>
+
+<div id="pause" class="overlay hidden">
+ <div class="panel endpanel">
+  <h2 style="color:#18e6ff" id="pauseTitle">PAUSED</h2>
+  <p class="reason" id="pauseText">The patient is (briefly) stable.</p>
+  <div class="btnrow"><button id="btnResume" class="start">RESUME ▶</button><button id="btnQuit" class="mode">QUIT TO MENU</button></div>
+  <div class="foot"><kbd>Esc</kbd> resume</div>
+ </div>
+</div>
+
+<div id="fatal" class="overlay hidden">
+ <div class="panel endpanel"><h2 style="color:#ff2a3d">THREE.JS FAILED TO LOAD</h2>
+ <p class="reason">vendor/three.min.js didn't load. Check the deployment and reload.</p></div>
+</div>
+
+<script type="module" src="js/client.js"></script>
+</body>
+</html>
